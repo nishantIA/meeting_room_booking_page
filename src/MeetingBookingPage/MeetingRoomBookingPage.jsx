@@ -1,36 +1,12 @@
 "use client"
 import React, { useEffect, useMemo, useState } from "react";
+import {AiOutlinePlusCircle, AiOutlineMinusCircle} from 'react-icons/ai'
 
 const unavailableSlotsByDate = {
   "2023-08-11": ["10:00", "14:00"],
   "2023-08-12": ["09:30", "13:30","16:00"],
   "2023-08-13": ["10:30", "12:30", "13:00", "15:30"],
-  // Add more entries as needed
 };
-
-// function generateSlots(openingTime, closingTime) {
-//   const slots = [];
-//   let currentTime = openingTime;
-//   while (currentTime <= closingTime) {
-//     const [hours, minutes] = currentTime.split(":");
-//     const time = new Date();
-//     time.setHours(Number(hours));
-//     time.setMinutes(Number(minutes));
-    
-//     const hours12Format = time.getHours() > 12 ? time.getHours() - 12 : time.getHours();
-//     const amPm = time.getHours() >= 12 ? "PM" : "AM";
-//     const formattedHours = hours12Format < 10 ? `0${hours12Format}` : hours12Format;
-//     const formattedTime = `${formattedHours}:${minutes} ${amPm}`;
-    
-//     slots.push(formattedTime);
-    
-//     time.setMinutes(time.getMinutes() + 30);
-//     currentTime = time.toTimeString().substr(0, 5);
-//   }
-//   return slots;
-// }
-
-
 
 function generateSlots(openingTime, closingTime) {
   const slots = [];
@@ -51,11 +27,39 @@ function generateSlots(openingTime, closingTime) {
 const MeetingRoomBookingPage = () => {
   const [selectedDate, setSelectedDate] = useState("2023-08-11");
   const [selectedSlots, setSelectedSlots] = useState([]);
-  const [duration, setDuration] = useState({timeDuration:0.0,unit:"mins"});
-  const [credits, setCredits] = useState(0);
+  const [durationAndCredits, setDurationAndCredits] = useState({
+    timeDuration: 0.0,
+    unit: "mins",
+    credits: 0,
+  });
   const creditRequiredPerMeetingSlot = 1;
   const openingTime = "09:00";
   const closingTime = "19:30";
+
+  const calculatedDurationAndCredits = useMemo(() => {
+    let newTimeDuration = 0;
+    let newTimeUnit = "mins";
+    
+    if (selectedSlots.length === 1) {
+      newTimeDuration = 30;
+      newTimeUnit = "mins";
+    } else if (selectedSlots.length >= 2) {
+      newTimeDuration = (selectedSlots.length * 0.5).toFixed(1);
+      newTimeUnit = selectedSlots.length === 2 ? "hr" : "hrs";
+    }
+
+    const newTotalCredits = creditRequiredPerMeetingSlot * selectedSlots.length;
+    
+    return {
+      timeDuration: newTimeDuration,
+      unit: newTimeUnit,
+      credits: newTotalCredits,
+    };
+  }, [selectedSlots.length]);
+
+  useEffect(() => {
+    setDurationAndCredits(calculatedDurationAndCredits);
+  }, [calculatedDurationAndCredits]);
 
   const handleSelectSlot = (slot) => {
     selectedSlots.sort();
@@ -86,24 +90,6 @@ const MeetingRoomBookingPage = () => {
     }
   };
 
-  const updateTimeDuration = useMemo(() => {
-    const selectedSlotArrayLength = selectedSlots.length;
-    if(selectedSlotArrayLength===1){
-      setDuration(prev=>{return {...prev, timeDuration:30,unit:"mins"}})
-    }else if(selectedSlotArrayLength===2){
-      setDuration(prev=>{return {...prev, timeDuration:(selectedSlotArrayLength*0.5).toFixed(1),unit:"hr"}})
-    } else if(selectedSlotArrayLength>2){
-      setDuration(prev=>{return {...prev, timeDuration:(selectedSlotArrayLength*0.5).toFixed(1),unit:"hrs"}})
-    }else{
-      setDuration(prev=>{return {...prev, timeDuration:0,unit:"mins"}})
-    }
-  },[selectedSlots.length]);
-
-  const calculateCreditsRequired = useMemo(()=>{
-    const totalCredits = creditRequiredPerMeetingSlot*selectedSlots.length;
-    setCredits(totalCredits);
-  },[selectedSlots.length])
-
   const handleDateChange = (event) => {
     setSelectedDate(event.target.value);
     setSelectedSlots([]); // Reset selected slots when changing date
@@ -122,7 +108,6 @@ const MeetingRoomBookingPage = () => {
   const isIndexFirstOrLast = (slot) => {
     selectedSlots.sort();
     const index = selectedSlots.indexOf(slot);
-    console.log(index)
     if(index===0 || index===selectedSlots.length-1) return true;
     return false;
   }
@@ -138,7 +123,39 @@ const MeetingRoomBookingPage = () => {
     } else {
       return "Invalid time format";
     }
+
   }
+
+  const handleDurationChange = (type = "") => {
+    if (selectedSlots.length === 0) {
+      return;
+    }
+  
+    selectedSlots.sort();
+    const lastSelectedSlot = selectedSlots[selectedSlots.length - 1];
+  
+    if (type === "increament") {
+      const nextSlot = getNextSlot(lastSelectedSlot);
+      setSelectedSlots([...selectedSlots, nextSlot]);
+    } else if (type === "decreament") {
+      setSelectedSlots(prevArray => prevArray.slice(0, -1));
+    }
+  };
+
+  const isPlusButtonDisabled = () => {
+    if (selectedSlots.length === 0) {
+      return true;
+    }
+    
+    const lastSelectedSlot = selectedSlots[selectedSlots.length - 1];
+    const nextSlot = getNextSlot(lastSelectedSlot);
+    
+    return !nextSlot || unavailableSlots.includes(nextSlot);
+  };
+  
+  const isMinusButtonDisabled = () => {
+    return selectedSlots.length <= 1;
+  };
 
   const slots = generateSlots(openingTime, closingTime);
   const unavailableSlots = unavailableSlotsByDate[selectedDate] || [];
@@ -171,7 +188,7 @@ const MeetingRoomBookingPage = () => {
           />
         </div>
         <div className="mt-8 text-center">
-          <p className="">Slots available on : <span className="font-medium">{new Date(selectedDate).toDateString()}</span></p>
+          <p className="">Slots available on : <span className="font-medium">{selectedDate}</span></p>
         </div>
         <div className="mt-4 grid grid-cols-4 gap-2">
           {slots.map((slot) => (
@@ -183,7 +200,7 @@ const MeetingRoomBookingPage = () => {
                   ? "bg-red-600 text-white cursor-pointer"
                   : unavailableSlots.includes(slot)
                   ? "bg-gray-400 text-white cursor-not-allowed"
-                  : "text-green-600 bg-white border border-green-700 hover:bg-green-600 hover:text-white hover:cursor-pointer"
+                  : "text-green-600 bg-white border border-green-700 md:hover:bg-green-600 hover:text-white hover:cursor-pointer"
               }`}
               disabled={unavailableSlots.includes(slot)}
             >
@@ -194,19 +211,30 @@ const MeetingRoomBookingPage = () => {
 
         <div className="mt-8 text-center">
           <p className="text-4xl font-semibold mb-2">Duration</p>
-          <p className="text-6xl font-bold text-red-500">{duration.timeDuration}<span className="text-2xl">{duration.unit}</span></p>
-          <p className="text-lg font-bold text-gray-800 mt-8">Credits required: <span className="font-bold text-red-500">{credits}</span></p>
+          <div className="flex justify-evenly items-center">
+            <div>
+              <button
+                className="rounded-full active:text-red-400"
+                disabled={isMinusButtonDisabled()}
+                onClick={() => handleDurationChange("decreament")}
+              >
+                <AiOutlineMinusCircle className={`w-8 h-8 ${isMinusButtonDisabled() ? 'text-gray-400': 'text-black'}`}/>
+              </button>
+            </div>
+            <div className="w-44"><p className="text-6xl font-bold text-red-500">{durationAndCredits.timeDuration}<span className="text-2xl">{durationAndCredits.unit}</span></p></div>
+            <div>
+              <button
+                className="text-black rounded-full active:text-red-400"
+                onClick={() => handleDurationChange("increament")}
+                disabled={isPlusButtonDisabled()}
+              >
+                <AiOutlinePlusCircle className={`w-8 h-8 ${isPlusButtonDisabled() ? 'text-gray-400': 'text-black'}`}/>
+              </button>
+            </div>
+          </div>
+          <p className="text-lg font-bold text-gray-800 mt-8">Credits required: <span className="font-bold text-red-500">{durationAndCredits.credits}</span></p>
           <p className="text-lg font-bold text-gray-800 mt-2">Meeting starts at : <span className="font-bold text-red-500">{ selectedSlots.sort()[0] ? convertToAMPM(selectedSlots[0]):"NA"}</span></p>
         </div>
-
-        {/* <div className="mt-4 text-center">
-          <p className="text-4xl font-semibold mb-2">Duration</p>
-          <p className="text-6xl font-bold text-red-500">{duration.timeDuration}<span className="text-2xl">{duration.unit}</span></p>
-        </div>
-
-        <div className="mt-4 text-center">
-          <p className="text-lg font-bold text-gray-800 mb-2">Credits required: <span className="font-bold text-red-500">{credits}</span></p>
-        </div> */}
 
           <div className="max-w-md mt-8 w-full flex flex-col items-center justify-center bg-white p-6 rounded-lg">
             <input type="text" placeholder="Meeting Title" className="border p-2 mb-2 w-full rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"/>
