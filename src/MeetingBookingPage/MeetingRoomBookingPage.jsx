@@ -25,7 +25,7 @@ function generateSlots(openingTime, closingTime) {
 }
 
 const MeetingRoomBookingPage = () => {
-  const [selectedDate, setSelectedDate] = useState("2023-08-14");
+  const [selectedDate, setSelectedDate] = useState("2023-08-11");
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [duration, setDuration] = useState({timeDuration:0.0,unit:"mins"});
   const [credits, setCredits] = useState(0);
@@ -35,7 +35,7 @@ const MeetingRoomBookingPage = () => {
     credits: 0,
   });
   const creditRequiredPerMeetingSlot = 1;
-  const openingTime = new Date(selectedDate) === new Date() ? `${new Date().getHours()}:${new Date().getMinutes()}` : "00:00";
+  const openingTime = new Date(selectedDate) === new Date() ? `${new Date().getHours()}:${new Date().getMinutes()}` : "09:00";
   const closingTime = "19:30";
 
   const calculatedDurationAndCredits = useMemo(() => {
