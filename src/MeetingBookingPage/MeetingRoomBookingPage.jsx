@@ -25,15 +25,17 @@ function generateSlots(openingTime, closingTime) {
 }
 
 const MeetingRoomBookingPage = () => {
-  const [selectedDate, setSelectedDate] = useState("2023-08-11");
+  const [selectedDate, setSelectedDate] = useState("2023-08-14");
   const [selectedSlots, setSelectedSlots] = useState([]);
+  const [duration, setDuration] = useState({timeDuration:0.0,unit:"mins"});
+  const [credits, setCredits] = useState(0);
   const [durationAndCredits, setDurationAndCredits] = useState({
     timeDuration: 0.0,
     unit: "mins",
     credits: 0,
   });
   const creditRequiredPerMeetingSlot = 1;
-  const openingTime = "09:00";
+  const openingTime = new Date(selectedDate) === new Date() ? `${new Date().getHours()}:${new Date().getMinutes()}` : "00:00";
   const closingTime = "19:30";
 
   const calculatedDurationAndCredits = useMemo(() => {
@@ -88,7 +90,7 @@ const MeetingRoomBookingPage = () => {
           isIndexFirstOrLast(slot) ? setSelectedSlots(selectedSlots.filter((s) => s !== slot)) : setSelectedSlots([]);
       }
     }
-  };
+  };  
 
   const handleDateChange = (event) => {
     setSelectedDate(event.target.value);
@@ -117,9 +119,9 @@ const MeetingRoomBookingPage = () => {
     const parsedHours = parseInt(hours, 10);
     
     if (parsedHours >= 0 && parsedHours <= 11) {
-      return `${parsedHours === 0 ? 12 : parsedHours}:${minutes} AM`;
+      return `${parsedHours === 0 ? 12 : parsedHours.toString().padStart(2,0)}:${minutes} AM`;
     } else if (parsedHours >= 12 && parsedHours <= 23) {
-      return `${parsedHours === 12 ? 12 : parsedHours - 12}:${minutes} PM`;
+      return `${parsedHours === 12 ? 12 : (parsedHours - 12).toString().padStart(2,0)}:${minutes} PM`;
     } else {
       return "Invalid time format";
     }
@@ -156,6 +158,52 @@ const MeetingRoomBookingPage = () => {
   const isMinusButtonDisabled = () => {
     return selectedSlots.length <= 1;
   };
+
+  // 2nd approach using state
+
+  // const handleDurationChange = (type = "") => {
+  //   if (selectedSlots.length === 0) {
+  //     return;
+  //   }
+  
+  //   selectedSlots.sort();
+  //   const lastSelectedSlot = selectedSlots[selectedSlots.length - 1];
+  
+  //   if (type === "increament") {
+  //     const nextSlot = getNextSlot(lastSelectedSlot);
+  //     setSelectedSlots([...selectedSlots, nextSlot]);
+  //     if (selectedSlots.length >= 1) {
+  //       setIsMinusButtonDisabled(false);
+  //     }
+  //     disablePlusButton(lastSelectedSlot);
+  //   } else if (type === "decreament") {
+  //     setSelectedSlots(prevArray => prevArray.slice(0, -1));
+  //     if (selectedSlots.length <= 2) {
+  //       setIsMinusButtonDisabled(true);
+  //     }
+  //     disableMinusButton();
+  //   }
+  // };
+  
+
+  // const disablePlusButton = (lastSelectedSlot) => {
+  //   const nextSlot = getNextSlot(lastSelectedSlot);
+  //   const twoSlotsAheadOfLastSelectedSlot = getNextSlot(nextSlot);
+    
+  //   if (!twoSlotsAheadOfLastSelectedSlot || unavailableSlots.includes(twoSlotsAheadOfLastSelectedSlot)) {
+  //     setIsPlusButtonDisabled(true);
+  //   } else {
+  //     setIsPlusButtonDisabled(false);
+  //   }
+  // };
+  
+  // const disableMinusButton = () => {
+  //   if (selectedSlots.length <= 2) {
+  //     setIsMinusButtonDisabled(true);
+  //   } else {
+  //     setIsMinusButtonDisabled(false);
+  //   }
+  // };
 
   const slots = generateSlots(openingTime, closingTime);
   const unavailableSlots = unavailableSlotsByDate[selectedDate] || [];
@@ -200,7 +248,7 @@ const MeetingRoomBookingPage = () => {
                   ? "bg-red-600 text-white cursor-pointer"
                   : unavailableSlots.includes(slot)
                   ? "bg-gray-400 text-white cursor-not-allowed"
-                  : "text-green-600 bg-white border border-green-700 md:hover:bg-green-600 hover:text-white hover:cursor-pointer"
+                  : "text-green-600 bg-white border border-green-700 md:hover:bg-green-600 md:hover:text-white hover:cursor-pointer"
               }`}
               disabled={unavailableSlots.includes(slot)}
             >
