@@ -287,7 +287,7 @@ const MeetingRoomBookingPage = () => {
           <div className="max-w-md mt-8 w-full flex flex-col items-center justify-center bg-white p-6 rounded-lg">
             <input type="text" placeholder="Meeting Title" className="border p-2 mb-2 w-full rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"/>
             <input placeholder="Meeting Description" className="border h-28 p-2 mb-2 w-full rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"/>           
-            <button className="mt-8 mb-10 bg-red-600 text-white rounded-md px-4 py-2 hover:bg-red-600 focus:outline-none focus:ring-1 focus:ring-red-500">Book Now</button>
+            <button className="w-full mt-8 mb-10 bg-red-600 text-white rounded-md px-4 text-lg lg:text-xl py-3 font-medium hover:bg-red-600 focus:outline-none focus:ring-1 focus:ring-red-500">Book Now</button>
           </div>
         
       </div>
